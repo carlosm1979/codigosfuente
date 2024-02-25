@@ -26,4 +26,61 @@ jobs:
       run: |
         npm install
         npm run build
+
+    - name: Archive artifact
+      shell: sh
+      if: runner.os == 'Linux'
+      run: |
+        echo ::group::Archive artifact
+        tar \
+          --dereference --hard-dereference \
+          --directory "./app" \
+          -cvf "$RUNNER_TEMP/artifact.tar" \
+          --exclude=.git \
+          --exclude=.github \
+          .
+        echo ::endgroup::
+      env:
+        INPUT_PATH: "./app"
+
+    - name: Archive artifact
+      shell: sh
+      if: runner.os == 'macOS'
+      run: |
+        echo ::group::Archive artifact
+        gtar \
+          --dereference --hard-dereference \
+          --directory "./app" \
+          -cvf "$RUNNER_TEMP/artifact.tar" \
+          --exclude=.git \
+          --exclude=.github \
+          .
+        echo ::endgroup::
+      env:
+        INPUT_PATH: "./app"
  
+    - name: Archive artifact
+      shell: bash
+      if: runner.os == 'Windows'
+      run: |
+        echo ::group::Archive artifact
+        tar \
+          --dereference --hard-dereference \
+          --directory "./app" \
+          -cvf "$RUNNER_TEMP\artifact.tar" \
+          --exclude=.git \
+          --exclude=.github \
+          --force-local \
+          "."
+        echo ::endgroup::
+      env:
+        INPUT_PATH: "./app"
+
+    - name: Upload artifact
+      id: upload-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: "github-pages"
+        path: ${{ runner.temp }}/artifact.tar
+        retention-days: "1"
+        if-no-files-found: error
